@@ -3,6 +3,7 @@ package com.faraji.noteapp.feature_note.domain.model
 import androidx.room.Entity
 import androidx.room.PrimaryKey
 import com.faraji.noteapp.ui.theme.*
+import java.lang.Exception
 
 @Entity
 data class Note(
@@ -23,3 +24,5 @@ data class Note(
         )
     }
 }
+
+class InvalidNoteException(message: String): Exception(message)
