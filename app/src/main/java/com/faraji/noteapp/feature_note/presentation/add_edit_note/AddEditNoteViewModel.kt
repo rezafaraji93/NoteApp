@@ -9,7 +9,6 @@ import androidx.lifecycle.viewModelScope
 import com.faraji.noteapp.feature_note.domain.model.InvalidNoteException
 import com.faraji.noteapp.feature_note.domain.model.Note
 import com.faraji.noteapp.feature_note.domain.use_case.NoteUseCases
-import com.faraji.noteapp.feature_note.domain.util.UiEvent
 import dagger.hilt.android.lifecycle.HiltViewModel
 import kotlinx.coroutines.flow.MutableSharedFlow
 import kotlinx.coroutines.flow.asSharedFlow
@@ -18,15 +17,13 @@ import javax.inject.Inject
 
 @HiltViewModel
 class AddEditNoteViewModel @Inject constructor(
-    private val useCases: NoteUseCases,
+    private val noteUseCases: NoteUseCases,
     savedStateHandle: SavedStateHandle
 ) : ViewModel() {
 
-    private var currentNoteId: Int? = null
-
     private val _noteTitle = mutableStateOf(
         NoteTextFieldState(
-            hint = "Enter title"
+            hint = "Enter title..."
         )
     )
     val noteTitle: State<NoteTextFieldState> = _noteTitle
@@ -44,17 +41,19 @@ class AddEditNoteViewModel @Inject constructor(
     private val _eventFlow = MutableSharedFlow<UiEvent>()
     val eventFlow = _eventFlow.asSharedFlow()
 
+    private var currentNoteId: Int? = null
+
     init {
         savedStateHandle.get<Int>("noteId")?.let { noteId ->
             if (noteId != -1) {
                 viewModelScope.launch {
-                    useCases.getNoteUseCase(noteId)?.also { note ->
+                    noteUseCases.getNoteUseCase(noteId)?.also { note ->
                         currentNoteId = note.id
                         _noteTitle.value = noteTitle.value.copy(
                             text = note.title,
                             isHintVisible = false
                         )
-                        _noteContent.value = noteContent.value.copy(
+                        _noteContent.value = _noteContent.value.copy(
                             text = note.content,
                             isHintVisible = false
                         )
@@ -67,13 +66,9 @@ class AddEditNoteViewModel @Inject constructor(
 
     fun onEvent(event: AddEditNoteEvent) {
         when (event) {
-            is AddEditNoteEvent.ChangeColor -> {
-                _noteColor.value = event.color
-            }
-            is AddEditNoteEvent.ChangeContentFocus -> {
-                _noteContent.value = noteContent.value.copy(
-                    isHintVisible = !event.focusState.isFocused &&
-                            noteContent.value.text.isBlank()
+            is AddEditNoteEvent.EnteredTitle -> {
+                _noteTitle.value = noteTitle.value.copy(
+                    text = event.value
                 )
             }
             is AddEditNoteEvent.ChangeTitleFocus -> {
@@ -83,23 +78,27 @@ class AddEditNoteViewModel @Inject constructor(
                 )
             }
             is AddEditNoteEvent.EnteredContent -> {
-                _noteContent.value = noteContent.value.copy(
+                _noteContent.value = _noteContent.value.copy(
                     text = event.value
                 )
             }
-            is AddEditNoteEvent.EnteredTitle -> {
-                _noteTitle.value = noteTitle.value.copy(
-                    text = event.value
+            is AddEditNoteEvent.ChangeContentFocus -> {
+                _noteContent.value = _noteContent.value.copy(
+                    isHintVisible = !event.focusState.isFocused &&
+                            _noteContent.value.text.isBlank()
                 )
+            }
+            is AddEditNoteEvent.ChangeColor -> {
+                _noteColor.value = event.color
             }
             is AddEditNoteEvent.SaveNote -> {
                 viewModelScope.launch {
                     try {
-                        useCases.addNoteUseCase.invoke(
+                        noteUseCases.addNoteUseCase(
                             Note(
                                 title = noteTitle.value.text,
                                 content = noteContent.value.text,
-                                timeStamp = System.currentTimeMillis(),
+                                timestamp = System.currentTimeMillis(),
                                 color = noteColor.value,
                                 id = currentNoteId
                             )
@@ -115,5 +114,10 @@ class AddEditNoteViewModel @Inject constructor(
                 }
             }
         }
+    }
+
+    sealed class UiEvent {
+        data class ShowSnackbar(val message: String) : UiEvent()
+        object SaveNote : UiEvent()
     }
 }

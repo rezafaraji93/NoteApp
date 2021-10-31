@@ -9,7 +9,7 @@ import java.lang.Exception
 data class Note(
     val title: String,
     val content: String,
-    val timeStamp: Long,
+    val timestamp: Long,
     val color: Int,
     @PrimaryKey(autoGenerate = true)
     val id: Int? = null

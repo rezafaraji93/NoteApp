@@ -11,6 +11,7 @@ import androidx.compose.material.*
 import androidx.compose.material.icons.Icons
 import androidx.compose.material.icons.filled.Save
 import androidx.compose.runtime.Composable
+import androidx.compose.runtime.LaunchedEffect
 import androidx.compose.runtime.remember
 import androidx.compose.runtime.rememberCoroutineScope
 import androidx.compose.ui.Modifier
@@ -23,6 +24,7 @@ import androidx.hilt.navigation.compose.hiltViewModel
 import androidx.navigation.NavController
 import com.faraji.noteapp.feature_note.domain.model.Note
 import com.faraji.noteapp.feature_note.presentation.add_edit_note.components.TransparentHintTextField
+import kotlinx.coroutines.flow.collectLatest
 import kotlinx.coroutines.launch
 
 @Composable
@@ -33,6 +35,7 @@ fun AddEditNoteScreen(
 ) {
     val titleState = viewModel.noteTitle.value
     val contentState = viewModel.noteContent.value
+
     val scaffoldState = rememberScaffoldState()
 
     val noteBackgroundAnimatable = remember {
@@ -40,8 +43,22 @@ fun AddEditNoteScreen(
             Color(if (noteColor != -1) noteColor else viewModel.noteColor.value)
         )
     }
-
     val scope = rememberCoroutineScope()
+
+    LaunchedEffect(key1 = true) {
+        viewModel.eventFlow.collectLatest { event ->
+            when (event) {
+                is AddEditNoteViewModel.UiEvent.ShowSnackbar -> {
+                    scaffoldState.snackbarHostState.showSnackbar(
+                        message = event.message
+                    )
+                }
+                is AddEditNoteViewModel.UiEvent.SaveNote -> {
+                    navController.navigateUp()
+                }
+            }
+        }
+    }
 
     Scaffold(
         floatingActionButton = {
@@ -56,7 +73,6 @@ fun AddEditNoteScreen(
         },
         scaffoldState = scaffoldState
     ) {
-
         Column(
             modifier = Modifier
                 .fillMaxSize()
@@ -79,14 +95,18 @@ fun AddEditNoteScreen(
                             .background(color)
                             .border(
                                 width = 3.dp,
-                                color = if (viewModel.noteColor.value == colorInt) Color.Black else Color.Transparent,
+                                color = if (viewModel.noteColor.value == colorInt) {
+                                    Color.Black
+                                } else Color.Transparent,
                                 shape = CircleShape
                             )
                             .clickable {
                                 scope.launch {
                                     noteBackgroundAnimatable.animateTo(
-                                        Color(colorInt),
-                                        animationSpec = tween(500)
+                                        targetValue = Color(colorInt),
+                                        animationSpec = tween(
+                                            durationMillis = 500
+                                        )
                                     )
                                 }
                                 viewModel.onEvent(AddEditNoteEvent.ChangeColor(colorInt))
@@ -98,21 +118,30 @@ fun AddEditNoteScreen(
             TransparentHintTextField(
                 text = titleState.text,
                 hint = titleState.hint,
-                onValueChanged = { viewModel.onEvent(AddEditNoteEvent.EnteredTitle(it)) },
-                onFocusChange = { viewModel.onEvent(AddEditNoteEvent.ChangeTitleFocus(it)) },
-                singleLine = true
+                onValueChanged = {
+                    viewModel.onEvent(AddEditNoteEvent.EnteredTitle(it))
+                },
+                onFocusChange = {
+                    viewModel.onEvent(AddEditNoteEvent.ChangeTitleFocus(it))
+                },
+                isHintVisible = titleState.isHintVisible,
+                singleLine = true,
+                textStyle = MaterialTheme.typography.h5
             )
-            Spacer(modifier = Modifier.height(8.dp))
+            Spacer(modifier = Modifier.height(16.dp))
             TransparentHintTextField(
                 text = contentState.text,
                 hint = contentState.hint,
-                onValueChanged = { viewModel.onEvent(AddEditNoteEvent.EnteredContent(it)) },
-                onFocusChange = { viewModel.onEvent(AddEditNoteEvent.ChangeContentFocus(it)) },
-                singleLine = false
+                onValueChanged = {
+                    viewModel.onEvent(AddEditNoteEvent.EnteredContent(it))
+                },
+                onFocusChange = {
+                    viewModel.onEvent(AddEditNoteEvent.ChangeContentFocus(it))
+                },
+                isHintVisible = contentState.isHintVisible,
+                textStyle = MaterialTheme.typography.body1,
+                modifier = Modifier.fillMaxHeight()
             )
         }
-
     }
-
-
 }

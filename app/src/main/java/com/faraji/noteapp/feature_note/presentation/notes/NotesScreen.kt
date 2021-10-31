@@ -10,14 +10,17 @@ import androidx.compose.material.icons.Icons
 import androidx.compose.material.icons.filled.Add
 import androidx.compose.material.icons.filled.Sort
 import androidx.compose.runtime.Composable
+import androidx.compose.runtime.LaunchedEffect
 import androidx.compose.runtime.rememberCoroutineScope
 import androidx.compose.ui.Alignment
 import androidx.compose.ui.Modifier
 import androidx.compose.ui.unit.dp
 import androidx.hilt.navigation.compose.hiltViewModel
 import androidx.navigation.NavController
+import com.faraji.noteapp.feature_note.domain.util.UiEvent
 import com.faraji.noteapp.feature_note.presentation.notes.components.NoteItem
 import com.faraji.noteapp.feature_note.presentation.notes.components.OrderSection
+import kotlinx.coroutines.flow.collectLatest
 import kotlinx.coroutines.launch
 
 @ExperimentalAnimationApi
@@ -30,11 +33,26 @@ fun NotesScreen(
     val scaffoldState = rememberScaffoldState()
     val scope = rememberCoroutineScope()
 
+    LaunchedEffect(key1 = true) {
+        viewModel.eventFlow.collectLatest { event ->
+            when (event) {
+                is UiEvent.Navigate -> {
+                    navController.navigate(event.route)
+                }
+                is UiEvent.ShowSnackbar -> {
+                    scaffoldState.snackbarHostState.showSnackbar(
+                        message = event.message
+                    )
+                }
+            }
+        }
+    }
+
     Scaffold(
         floatingActionButton = {
             FloatingActionButton(
                 onClick = {
-
+                    viewModel.onEvent(NotesEvent.ClickedOnAddNote)
                 },
                 backgroundColor = MaterialTheme.colors.primary
             ) {
@@ -93,7 +111,7 @@ fun NotesScreen(
                         modifier = Modifier
                             .fillMaxWidth()
                             .clickable {
-
+                                viewModel.onEvent(NotesEvent.ClickedOnNote(note))
                             },
                         onDeleteClick = {
                             viewModel.onEvent(NotesEvent.Delete(note))

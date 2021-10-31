@@ -6,11 +6,15 @@ import androidx.lifecycle.ViewModel
 import androidx.lifecycle.viewModelScope
 import com.faraji.noteapp.feature_note.domain.model.InvalidNoteException
 import com.faraji.noteapp.feature_note.domain.model.Note
+import com.faraji.noteapp.feature_note.domain.use_case.NoteUseCases
 import com.faraji.noteapp.feature_note.domain.util.NoteOrder
 import com.faraji.noteapp.feature_note.domain.util.OrderType
-import com.faraji.noteapp.feature_note.domain.use_case.NoteUseCases
+import com.faraji.noteapp.feature_note.domain.util.UiEvent
+import com.faraji.noteapp.feature_note.presentation.util.Screen
 import dagger.hilt.android.lifecycle.HiltViewModel
 import kotlinx.coroutines.Job
+import kotlinx.coroutines.flow.MutableSharedFlow
+import kotlinx.coroutines.flow.asSharedFlow
 import kotlinx.coroutines.flow.launchIn
 import kotlinx.coroutines.flow.onEach
 import kotlinx.coroutines.launch
@@ -27,6 +31,9 @@ class NotesViewModel @Inject constructor(
     private var recentlyDeletedNote: Note? = null
 
     private var getNotesJob: Job? = null
+
+    private val _eventFlow = MutableSharedFlow<UiEvent>()
+    val eventFlow = _eventFlow.asSharedFlow()
 
     init {
         getNotes(NoteOrder.Date(OrderType.Descending))
@@ -64,6 +71,23 @@ class NotesViewModel @Inject constructor(
                 _state.value = state.value.copy(
                     isOrderSectionVisible = !state.value.isOrderSectionVisible
                 )
+            }
+            is NotesEvent.ClickedOnAddNote -> {
+                viewModelScope.launch {
+                    _eventFlow.emit(
+                        UiEvent.Navigate(Screen.AddEditNoteScreen.route)
+                    )
+                }
+            }
+            is NotesEvent.ClickedOnNote -> {
+                viewModelScope.launch {
+                    _eventFlow.emit(
+                        UiEvent.Navigate(
+                            Screen.AddEditNoteScreen.route +
+                                    "?noteId=${event.note.id}&noteColor=${event.note.color}"
+                        )
+                    )
+                }
             }
         }
     }
