@@ -1,11 +1,8 @@
-package com.plcoding.cleanarchitecturenoteapp.feature_note.domain.use_case
-
-import com.faraji.noteapp.feature_note.domain.use_case.AddNoteUseCase
-import com.faraji.noteapp.feature_note.domain.use_case.DeleteNoteUseCase
-import com.faraji.noteapp.feature_note.domain.use_case.GetNotesUseCase
+package com.faraji.noteapp.feature_note.domain.use_case
 
 data class NoteUseCases(
     val getNotesUseCase: GetNotesUseCase,
     val addNoteUseCase: AddNoteUseCase,
-    val deleteNoteUseCase: DeleteNoteUseCase
+    val deleteNoteUseCase: DeleteNoteUseCase,
+    val getNoteUseCase: GetNoteUseCase
 )

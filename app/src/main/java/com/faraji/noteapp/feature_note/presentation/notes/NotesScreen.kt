@@ -18,6 +18,7 @@ import androidx.hilt.navigation.compose.hiltViewModel
 import androidx.navigation.NavController
 import com.faraji.noteapp.feature_note.presentation.notes.components.NoteItem
 import com.faraji.noteapp.feature_note.presentation.notes.components.OrderSection
+import kotlinx.coroutines.launch
 
 @ExperimentalAnimationApi
 @Composable
@@ -96,8 +97,18 @@ fun NotesScreen(
                             },
                         onDeleteClick = {
                             viewModel.onEvent(NotesEvent.Delete(note))
+                            scope.launch {
+                                val result = scaffoldState.snackbarHostState.showSnackbar(
+                                    message = "Note deleted",
+                                    actionLabel = "Undo"
+                                )
+                                if (result == SnackbarResult.ActionPerformed) {
+                                    viewModel.onEvent(NotesEvent.RestoreNote)
+                                }
+                            }
                         }
                     )
+                    Spacer(modifier = Modifier.height(16.dp))
                 }
             }
         }

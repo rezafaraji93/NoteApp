@@ -8,7 +8,7 @@ import com.faraji.noteapp.feature_note.domain.model.InvalidNoteException
 import com.faraji.noteapp.feature_note.domain.model.Note
 import com.faraji.noteapp.feature_note.domain.util.NoteOrder
 import com.faraji.noteapp.feature_note.domain.util.OrderType
-import com.plcoding.cleanarchitecturenoteapp.feature_note.domain.use_case.NoteUseCases
+import com.faraji.noteapp.feature_note.domain.use_case.NoteUseCases
 import dagger.hilt.android.lifecycle.HiltViewModel
 import kotlinx.coroutines.Job
 import kotlinx.coroutines.flow.launchIn
